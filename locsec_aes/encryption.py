@@ -7,7 +7,7 @@ from random import randbytes
 
 from Cryptodome.Cipher import AES
 
-from EncryptionException import EncryptionException
+from locsec_aes.EncryptionException import EncryptionException
 
 '''
 LocSec AES encryption chunk:
@@ -24,9 +24,16 @@ LocSec AES encryption chunk:
 
 supported_data_types = ["str", "int", "float", "list", "dict", "bytearray"]
 
+data_type_header_length = 32
+data_length_header_length = 32
+encrypted_headers_length = data_type_header_length + data_length_header_length
+initial_vector_length = 16
 default_data_resolution = 256
 data_size_max = 10485760  # 10 MiB
+min_key_length = 8
 key_len = 512
+
+
 default_encoding = sys.getdefaultencoding()
 
 fe = traceback.format_exc
@@ -35,7 +42,7 @@ fe = traceback.format_exc
 def encrypt_data(data, encryption_key, initial_vector=None):
     try:
 
-        if len(encryption_key) < 8 or type(encryption_key) is not str:
+        if len(encryption_key) < min_key_length or type(encryption_key) is not str:
             raise EncryptionException("Bad encryption key:\n"
                                       "Encryption key should be a string with no less than 8 characters.")
 
@@ -45,7 +52,7 @@ def encrypt_data(data, encryption_key, initial_vector=None):
         # This is some magic used by AES256 to encrypt and decrypt (may not be secret or may be like a second password).
         #  in our case it is not secret. This vector should be 16 bytes long
         if initial_vector is None:
-            initial_vector = bytearray(randbytes(16))
+            initial_vector = bytearray(randbytes(initial_vector_length))
         aes = AES.new(key_raw, AES.MODE_CBC, initial_vector)
 
         # This step takes whatever type input data is and converts it to bytearray
@@ -56,12 +63,12 @@ def encrypt_data(data, encryption_key, initial_vector=None):
         if data_length > data_size_max:
             raise EncryptionException(
                 "Data exceeded maximum size. Max supported data size is {} bytes.".format(data_size_max))
-        data_length_raw = pad_data(byteify(data_length), 32)
+        data_length_raw = pad_data(byteify(data_length), data_length_header_length)
 
         # Adding (and padding) data type
         data_type = data.__class__.__name__
         if data_type in supported_data_types:
-            data_raw = pad_data(bytearray(data_type, default_encoding), 32)
+            data_raw = pad_data(bytearray(data_type, default_encoding), data_type_header_length)
         else:
             raise EncryptionException("Data type \"{}\" is not supported.".format(data_type))
         # Adding data length
@@ -73,10 +80,10 @@ def encrypt_data(data, encryption_key, initial_vector=None):
         #  Data resolution is dynamically calculated to make data 256-divisible (which will make it harder to guess
         #  the size of initial data.
         data_resolution = default_data_resolution
-        while data_resolution < data_length + 32:  # +32 is to account for added data type
+        while data_resolution < data_length + data_type_header_length:  # +32 is to account for added data type
             data_resolution += default_data_resolution
         # -16 is to account for additional data in each encrypted chunk
-        data_padded = pad_data(data_raw, data_resolution - 16)
+        data_padded = pad_data(data_raw, data_resolution - initial_vector_length)
 
         # Writing the vector we used above to encrypted data, so that we can decrypt it later
         encrypted_data = initial_vector
@@ -96,10 +103,10 @@ def decrypt_data_return_raw(data_to_dec, encryption_key):
     key_raw = pad_enc_key(byteify(encryption_key))
 
     # Getting initial vector (it is first 16 unencrypted bytes)
-    init_vector = data_raw[:16]
+    init_vector = data_raw[:initial_vector_length]
 
     # All the encrypted data is everything after initial vector
-    encrypted_data = data_raw[16:]
+    encrypted_data = data_raw[initial_vector_length:]
 
     # Initializing AES and decrypting data
     aes = AES.new(key_raw, AES.MODE_CBC, init_vector)
@@ -112,9 +119,9 @@ def decrypt_data(data_to_dec, encryption_key):
         decrypted_data = decrypt_data_return_raw(data_to_dec, encryption_key)
 
         # Stripping parts of decrypted chunk, finding encrypted data
-        data_type = depad_data(decrypted_data[:32]).decode(default_encoding)
-        data_length = int(depad_data(decrypted_data[32:64]))
-        decrypted_data_raw = decrypted_data[64:64 + data_length]
+        data_type = depad_data(decrypted_data[:data_type_header_length]).decode(default_encoding)
+        data_length = int(depad_data(decrypted_data[data_type_header_length:encrypted_headers_length]))
+        decrypted_data_raw = decrypted_data[encrypted_headers_length:encrypted_headers_length + data_length]
         # Creating a properly-typed object from decrypted data and returning it
         decrypted_data_prepared = prepare_decrypted_data(data_type, decrypted_data_raw)
         return decrypted_data_prepared
