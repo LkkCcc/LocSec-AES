@@ -80,7 +80,7 @@ def encrypt_data(data, encryption_key, initial_vector=None):
         #  Data resolution is dynamically calculated to make data 256-divisible (which will make it harder to guess
         #  the size of initial data.
         data_resolution = default_data_resolution
-        while data_resolution < data_length + data_type_header_length:  # +32 is to account for added data type
+        while data_resolution < data_length + initial_vector_length + encrypted_headers_length:
             data_resolution += default_data_resolution
         # -16 is to account for additional data in each encrypted chunk
         data_padded = pad_data(data_raw, data_resolution - initial_vector_length)
