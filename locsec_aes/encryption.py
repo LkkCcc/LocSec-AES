@@ -87,24 +87,29 @@ def encrypt_data(data, encryption_key, initial_vector=None):
         raise EncryptionException("Error while encrypting. Check logs")
 
 
+def decrypt_data_return_raw(data_to_dec, encryption_key):
+    if type(data_to_dec) is not bytearray:
+        logging.warning("{}: Data to decrypt is not bytearray. Will try to byteify,"
+                        " but please pass data as raw bytearray.".format(__file__))
+    data_raw = byteify(data_to_dec)
+    # Preparing key for use
+    key_raw = pad_enc_key(byteify(encryption_key))
+
+    # Getting initial vector (it is first 16 unencrypted bytes)
+    init_vector = data_raw[:16]
+
+    # All the encrypted data is everything after initial vector
+    encrypted_data = data_raw[16:]
+
+    # Initializing AES and decrypting data
+    aes = AES.new(key_raw, AES.MODE_CBC, init_vector)
+    decrypted_data = bytearray(aes.decrypt(encrypted_data))
+    return decrypted_data
+
+
 def decrypt_data(data_to_dec, encryption_key):
     try:
-        if type(data_to_dec) is not bytearray:
-            logging.warning("{}: Data to decrypt is not bytearray. Will try to byteify,"
-                            " but please pass data as raw bytearray.".format(__file__))
-        data_raw = byteify(data_to_dec)
-        # Preparing key for use
-        key_raw = pad_enc_key(byteify(encryption_key))
-
-        # Getting initial vector (it is first 16 unencrypted bytes)
-        init_vector = data_raw[:16]
-
-        # All the encrypted data is everything after initial vector
-        encrypted_data = data_raw[16:]
-
-        # Initializing AES and decrypting data
-        aes = AES.new(key_raw, AES.MODE_CBC, init_vector)
-        decrypted_data = bytearray(aes.decrypt(encrypted_data))
+        decrypted_data = decrypt_data_return_raw(data_to_dec, encryption_key)
 
         # Stripping parts of decrypted chunk, finding encrypted data
         data_type = depad_data(decrypted_data[:32]).decode(default_encoding)
