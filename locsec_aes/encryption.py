@@ -94,6 +94,16 @@ def encrypt_data(data, encryption_key, initial_vector=None):
         raise EncryptionException("Error while encrypting. Check logs")
 
 
+def decrypt_data_return_raw_wo_headers(data_to_dec, encryption_key):
+    decrypted_data = decrypt_data_return_raw(data_to_dec, encryption_key)
+
+    # Stripping parts of decrypted chunk, finding encrypted data
+    data_type = depad_data(decrypted_data[:data_type_header_length]).decode(default_encoding)
+    data_length = int(depad_data(decrypted_data[data_type_header_length:encrypted_headers_length]))
+    decrypted_data_raw = decrypted_data[encrypted_headers_length:encrypted_headers_length + data_length]
+    return data_type, decrypted_data_raw
+
+
 def decrypt_data_return_raw(data_to_dec, encryption_key):
     if type(data_to_dec) is not bytearray:
         logging.warning("{}: Data to decrypt is not bytearray. Will try to byteify,"
@@ -116,12 +126,7 @@ def decrypt_data_return_raw(data_to_dec, encryption_key):
 
 def decrypt_data(data_to_dec, encryption_key):
     try:
-        decrypted_data = decrypt_data_return_raw(data_to_dec, encryption_key)
-
-        # Stripping parts of decrypted chunk, finding encrypted data
-        data_type = depad_data(decrypted_data[:data_type_header_length]).decode(default_encoding)
-        data_length = int(depad_data(decrypted_data[data_type_header_length:encrypted_headers_length]))
-        decrypted_data_raw = decrypted_data[encrypted_headers_length:encrypted_headers_length + data_length]
+        data_type, decrypted_data_raw = decrypt_data_return_raw_wo_headers(data_to_dec, encryption_key)
         # Creating a properly-typed object from decrypted data and returning it
         decrypted_data_prepared = prepare_decrypted_data(data_type, decrypted_data_raw)
         return decrypted_data_prepared
