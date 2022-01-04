@@ -1,0 +1,2 @@
+class EncryptionException(Exception):
+    pass
