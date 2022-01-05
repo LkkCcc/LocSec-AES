@@ -1,4 +1,5 @@
 import ast
+import json
 import logging
 import hashlib
 import traceback
@@ -177,7 +178,7 @@ def byteify(data):
         case str():
             return bytearray(data, default_encoding)
         case int() | float() | list() | dict():
-            return bytearray(str(data), default_encoding)
+            return bytearray(json.dumps(data), default_encoding)
         case bytes():
             return bytearray(data)
         case bytearray():
@@ -196,7 +197,10 @@ def prepare_decrypted_data(data_type, data):
         case "float":
             return float(data)
         case "dict" | "list":  # potential bugs???
-            return ast.literal_eval(data.decode(default_encoding))
+            try:
+                return ast.literal_eval(data.decode(default_encoding))
+            except Exception:
+                return json.loads(data.decode(default_encoding))
         case "bytearray":
             return bytearray(data)
         case _:
