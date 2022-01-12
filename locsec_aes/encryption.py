@@ -15,7 +15,7 @@ LocSec AES encryption chunk:
  
          |_not encrypted_|_________________________________________encrypted__________________________________________|
 
- size            16                  32                     32                              10485760 (max)
+ size            16                  32                     32                        10485760 (10 MiB) (max)
 (bytes)  |===============|######################|######################|##############################################|
                 ^                    ^                      ^                                  ^
           initial vector     type of encrypted     length of encrypted                   encrypted data
@@ -96,13 +96,16 @@ def encrypt_data(data, encryption_key, initial_vector=None):
 
 
 def decrypt_data_return_raw_wo_headers(data_to_dec, encryption_key):
-    decrypted_data = decrypt_data_return_raw(data_to_dec, encryption_key)
+    try:
+        decrypted_data = decrypt_data_return_raw(data_to_dec, encryption_key)
 
-    # Stripping parts of decrypted chunk, finding encrypted data
-    data_type = depad_data(decrypted_data[:data_type_header_length]).decode(default_encoding)
-    data_length = int(depad_data(decrypted_data[data_type_header_length:encrypted_headers_length]))
-    decrypted_data_raw = decrypted_data[encrypted_headers_length:encrypted_headers_length + data_length]
-    return data_type, decrypted_data_raw
+        # Stripping parts of decrypted chunk, finding encrypted data
+        data_type = depad_data(decrypted_data[:data_type_header_length]).decode(default_encoding)
+        data_length = int(depad_data(decrypted_data[data_type_header_length:encrypted_headers_length]))
+        decrypted_data_raw = decrypted_data[encrypted_headers_length:encrypted_headers_length + data_length]
+        return data_type, decrypted_data_raw
+    except Exception:
+        logging.exception("Error while decrypting data")
 
 
 def decrypt_data_return_raw(data_to_dec, encryption_key):
