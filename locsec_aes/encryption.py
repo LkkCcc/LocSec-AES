@@ -112,7 +112,11 @@ def decrypt_data_return_raw(data_to_dec, encryption_key):
     if type(data_to_dec) is not bytearray:
         logging.warning("{}: Data to decrypt is not bytearray. Will try to byteify,"
                         " but please pass data as raw bytearray.".format(__file__))
+
+    if len(data_to_dec) == 0:
+        return bytearray()
     data_raw = byteify(data_to_dec)
+
     # Preparing key for use
     key_raw = pad_enc_key(byteify(encryption_key))
 

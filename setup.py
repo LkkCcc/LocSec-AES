@@ -1,8 +1,8 @@
 from setuptools import setup
 
 setup(
-    name='locsec_aes',
-    version='0.1h',
+    name='locsec-aes',
+    version='0.1.1',
     packages=['locsec_aes.tests', 'locsec_aes'],
     url='',
     license='GPLv3',
