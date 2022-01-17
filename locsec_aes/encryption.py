@@ -148,7 +148,7 @@ def pad_enc_key(input_key):
         raise EncryptionException("Could not pad key: data is not byteified.\n{}".format(fe()))
     try:
         if len(input_key) != key_len:
-            sha256 = hashlib.sha256()
+            sha256 = hashlib.sha256(usedforsecurity=True)
             sha256.update(input_key)
             encrypt_key = sha256.digest()
         else:
