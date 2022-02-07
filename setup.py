@@ -8,5 +8,8 @@ setup(
     license='GPLv3',
     author='locchan',
     author_email='lkkccc@yandex.by',
+    install_requires=[
+        'pycryptodomex'
+    ],
     description='LocSec AES. AES Encryptor for LocSec'
 )
