@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='locsec-aes',
-    version='0.1.1',
+    version='0.1.2',
     packages=['locsec_aes.tests', 'locsec_aes'],
     url='',
     license='GPLv3',

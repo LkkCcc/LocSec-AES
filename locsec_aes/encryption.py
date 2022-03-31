@@ -1,12 +1,15 @@
 import ast
 import json
-import logging
 import hashlib
 import traceback
 import sys
 from random import randbytes
 
 from Cryptodome.Cipher import AES
+
+from locsec_aes.logger import get_logger
+
+logger = get_logger()
 
 from locsec_aes.EncryptionException import EncryptionException
 
@@ -91,7 +94,7 @@ def encrypt_data(data, encryption_key, initial_vector=None):
         encrypted_data.extend(bytearray(aes.encrypt(data_padded)))
         return encrypted_data
     except Exception:
-        logging.exception("Error while encrypting data.")
+        logger.exception("Error while encrypting data.")
         raise EncryptionException("Error while encrypting. Check logs")
 
 
@@ -105,12 +108,12 @@ def decrypt_data_return_raw_wo_headers(data_to_dec, encryption_key):
         decrypted_data_raw = decrypted_data[encrypted_headers_length:encrypted_headers_length + data_length]
         return data_type, decrypted_data_raw
     except Exception:
-        logging.exception("Error while decrypting data")
+        logger.exception("Error while decrypting data")
 
 
 def decrypt_data_return_raw(data_to_dec, encryption_key):
     if type(data_to_dec) is not bytearray:
-        logging.warning("{}: Data to decrypt is not bytearray. Will try to byteify,"
+        logger.warning("{}: Data to decrypt is not bytearray. Will try to byteify,"
                         " but please pass data as raw bytearray.".format(__file__))
 
     if len(data_to_dec) == 0:
@@ -139,7 +142,7 @@ def decrypt_data(data_to_dec, encryption_key):
         decrypted_data_prepared = prepare_decrypted_data(data_type, decrypted_data_raw)
         return decrypted_data_prepared
     except Exception:
-        logging.exception("Error while decrypting data.")
+        logger.exception("Error while decrypting data.")
         raise EncryptionException("Error while decrypting. Check logs")
 
 
