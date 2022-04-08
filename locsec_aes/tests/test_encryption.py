@@ -1,12 +1,12 @@
 import json
 import os
 import sys
-from random import random
-
+import random
+import string
 import pytest
 
 from locsec_aes.EncryptionException import EncryptionException
-from locsec_aes.encryption import encrypt_data, decrypt_data
+from locsec_aes.encryption import encrypt_data, decrypt_data, data_size_max
 
 default_encoding = sys.getdefaultencoding()
 enc_key = "Ia$&0f^%n2ERUc^beinHU8pXSLR@ir@*h392xdtStpeEy*tJEO"
@@ -16,55 +16,65 @@ test_data_default = "abcdef_)1245%#@!()&%"
 def test_int_1():
     test_data = 1
     encrypted = encrypt_data(test_data, enc_key)
-    assert decrypt_data(encrypted, enc_key) == test_data
+    assert decrypt_data(encrypted, enc_key) == str(test_data)
 
 
 def test_int_2():
     test_data = -1000000000
     encrypted = encrypt_data(test_data, enc_key)
-    assert decrypt_data(encrypted, enc_key) == test_data
+    assert decrypt_data(encrypted, enc_key) == str(test_data)
 
 
 def test_float_1():
-    test_data = 1.1
+    test_data = 2.2
     encrypted = encrypt_data(test_data, enc_key)
-    assert decrypt_data(encrypted, enc_key) == test_data
+    assert decrypt_data(encrypted, enc_key) == str(test_data)
 
 
 def test_float_2():
     test_data = -1.1111
     encrypted = encrypt_data(test_data, enc_key)
-    assert decrypt_data(encrypted, enc_key) == test_data
+    assert decrypt_data(encrypted, enc_key) == str(test_data)
 
 
 def test_float_3():
     test_data = 1.121312312312312312312
     encrypted = encrypt_data(test_data, enc_key)
-    assert decrypt_data(encrypted, enc_key) == test_data
+    assert decrypt_data(encrypted, enc_key) == str(test_data)
 
 
 def test_string_1():
     test_data = "['A', 'B', 'C', ' D']"
     encrypted = encrypt_data(test_data, enc_key)
-    assert decrypt_data(encrypted, enc_key) == test_data
+    assert decrypt_data(encrypted, enc_key) == str(test_data)
 
 
 def test_string_2():
     test_data = ""
     encrypted = encrypt_data(test_data, enc_key)
-    assert decrypt_data(encrypted, enc_key) == test_data
+    assert decrypt_data(encrypted, enc_key) == str(test_data)
 
 
 def test_size_max():
-    test_data = bytearray(os.urandom(10485760))
+    test_data = ""
+    for a in range(int(data_size_max / 512)):
+        test_data += "0987612345754381098761234575438109876123457543810987612345754381" \
+                     "0987612345754381098761234575438109876123457543810987612345754381" \
+                     "0987612345754381098761234575438109876123457543810987612345754381" \
+                     "0987612345754381098761234575438109876123457543810987612345754381" \
+                     "0987612345754381098761234575438109876123457543810987612345754381" \
+                     "0987612345754381098761234575438109876123457543810987612345754381" \
+                     "0987612345754381098761234575438109876123457543810987612345754381" \
+                     "0987612345754381098761234575438109876123457543810987612345754381"
     encrypted = encrypt_data(test_data, enc_key)
-    assert decrypt_data(encrypted, enc_key) == test_data
+    assert decrypt_data(encrypted, enc_key)[547] == str(test_data)[547] and\
+           decrypt_data(encrypted, enc_key)[184] == str(test_data)[184]
 
 
 def test_size_too_big():
     with pytest.raises(EncryptionException):
         test_data = bytearray(os.urandom(10485761))
-        encrypt_data(test_data, enc_key)
+        encrypt_data(test_data, str(enc_key))
 
 
 def test_list_1():
@@ -72,8 +82,7 @@ def test_list_1():
     encrypted = encrypt_data(test_data, enc_key)
     decrypted_data = decrypt_data(encrypted, enc_key)
     test_data_json = json.dumps(test_data)
-    decrypted_data_json = json.dumps(decrypted_data)
-    assert test_data_json == decrypted_data_json
+    assert test_data_json == decrypted_data
 
 
 def test_list_2():
@@ -81,8 +90,7 @@ def test_list_2():
     encrypted = encrypt_data(test_data, enc_key)
     decrypted_data = decrypt_data(encrypted, enc_key)
     test_data_json = json.dumps(test_data)
-    decrypted_data_json = json.dumps(decrypted_data)
-    assert test_data_json == decrypted_data_json
+    assert test_data_json == decrypted_data
 
 
 def test_list_3():
@@ -92,8 +100,7 @@ def test_list_3():
     encrypted = encrypt_data(test_data, enc_key)
     decrypted_data = decrypt_data(encrypted, enc_key)
     test_data_json = json.dumps(test_data)
-    decrypted_data_json = json.dumps(decrypted_data)
-    assert test_data_json == decrypted_data_json
+    assert test_data_json == decrypted_data
 
 
 def test_dict_1():
@@ -101,8 +108,7 @@ def test_dict_1():
     encrypted = encrypt_data(test_data, enc_key)
     decrypted_data = decrypt_data(encrypted, enc_key)
     test_data_json = json.dumps(test_data)
-    decrypted_data_json = json.dumps(decrypted_data)
-    assert test_data_json == decrypted_data_json
+    assert test_data_json == decrypted_data
 
 
 def test_dict_2():
@@ -110,8 +116,7 @@ def test_dict_2():
     encrypted = encrypt_data(test_data, enc_key)
     decrypted_data = decrypt_data(encrypted, enc_key)
     test_data_json = json.dumps(test_data)
-    decrypted_data_json = json.dumps(decrypted_data)
-    assert test_data_json == decrypted_data_json
+    assert test_data_json == decrypted_data
 
 
 def test_dict_3():
@@ -166,8 +171,7 @@ def test_dict_3():
     encrypted = encrypt_data(test_data, enc_key)
     decrypted_data = decrypt_data(encrypted, enc_key)
     test_data_json = json.dumps(test_data)
-    decrypted_data_json = json.dumps(decrypted_data)
-    assert test_data_json == decrypted_data_json
+    assert test_data_json == decrypted_data
 
 
 def test_bad_data_type():
@@ -201,6 +205,6 @@ def test_bad_key_3():
 
 
 def test_no_data():
-    test_data = bytearray()
+    test_data = ""
     encrypted = encrypt_data(test_data, enc_key)
     assert decrypt_data(encrypted, enc_key) == test_data

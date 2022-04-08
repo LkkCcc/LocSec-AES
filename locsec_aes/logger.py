@@ -1,6 +1,5 @@
 import logging
 import sys
-import os
 
 _log_format = "%(asctime)s - [%(levelname)-7s] - LocSec-AES: %(filename)32s:%(lineno)-3s | %(message)s"
 
