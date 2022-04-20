@@ -235,9 +235,9 @@ def _byteify(data):
     :param data: data to byteify
     :return: data as bytearray
     """
-    if not isinstance(data, str):
-        logger.warning("{}: Data to encrypt is not a string. Will try to byteify,"
-                       " but please pass data as a string.".format(__file__))
+    if not isinstance(data, str) and not isinstance(data, bytes) and not isinstance(data, bytearray):
+        logger.warning("{}: Data to encrypt is not a string or binary. Will try to byteify,"
+                       " but please pass data as a string or binary.".format(__file__))
     match data:
         case str():
             return bytearray(data, encoding)
