@@ -22,7 +22,7 @@ LocSec AES encryption chunk:
  size            16                  32                     32                        10485760 (10 MiB) (max)
 (bytes)  |===============|######################|######################|##############################################|
                 ^                    ^                      ^                                  ^
-          initial vector     sha256 of the data     length of encrypted                   encrypted data
+          initial vector    sha256 of the data     length of encrypted                   encrypted data
                                                       data (in bytes)
                              
 '''
@@ -132,7 +132,8 @@ def _decrypt_data_return_raw(data_to_dec, encryption_key):
     """
     if type(data_to_dec) is not bytearray:
         logger.warning("{}: Data to decrypt is not bytearray. Will try to byteify,"
-                       " but please pass data as raw bytearray.".format(__file__))
+                       " but please pass data as raw bytearray. You passed data as a \"{}\""
+                       .format(__file__, data_to_dec.__class__.__name__))
 
     if len(data_to_dec) == 0:
         return bytearray()
@@ -237,7 +238,8 @@ def _byteify(data):
     """
     if not isinstance(data, str) and not isinstance(data, bytes) and not isinstance(data, bytearray):
         logger.warning("{}: Data to encrypt is not a string or binary. Will try to byteify,"
-                       " but please pass data as a string or binary.".format(__file__))
+                       " but please pass data as a string or binary. You passed data as a \"{}\""
+                       .format(__file__, data.__class__.__name__))
     match data:
         case str():
             return bytearray(data, encoding)
@@ -250,5 +252,5 @@ def _byteify(data):
         case bytearray():
             return data
         case _:
-            raise EncryptionException("Unknown data type passed to prepare for encryption! The type is: {}"
+            raise EncryptionException("Unknown data type passed to prepare for encryption! The type is: \"{}\""
                                       .format(type(data)))
