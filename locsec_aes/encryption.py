@@ -74,7 +74,7 @@ def encrypt_data(data, encryption_key, initial_vector=None):
         if data_length > data_size_max:
             raise EncryptionException(
                 "Data exceeded maximum size. Max supported data size is {} bytes.".format(data_size_max))
-        data_length_raw = _pad_data(_byteify(data_length), data_length_header_length)
+        data_length_raw = _pad_data(_byteify(data_length, True), data_length_header_length)
 
         # Adding (and padding) data type
         data_raw = bytearray(_sha(data_byteified))
@@ -230,13 +230,13 @@ def _depad_data(data):
     return bytearray(depadded_data)
 
 
-def _byteify(data):
+def _byteify(data, no_warnings=False):
     """
     Casting input data to bytearray
     :param data: data to byteify
     :return: data as bytearray
     """
-    if not isinstance(data, str) and not isinstance(data, bytes) and not isinstance(data, bytearray):
+    if not no_warnings and not isinstance(data, str) and not isinstance(data, bytes) and not isinstance(data, bytearray):
         logger.warning("{}: Data to encrypt is not a string or binary. Will try to byteify,"
                        " but please pass data as a string or binary. You passed data as a \"{}\""
                        .format(__file__, data.__class__.__name__))
