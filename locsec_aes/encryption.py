@@ -29,9 +29,9 @@ LocSec AES encryption chunk:
 
 supported_data_types = ["str", "int", "float", "list", "dict", "bytearray"]
 
-data_type_header_length = 32
+data_hash_header_length = 32
 data_length_header_length = 32
-encrypted_headers_length = data_type_header_length + data_length_header_length
+encrypted_headers_length = data_hash_header_length + data_length_header_length
 initial_vector_length = 16
 default_data_resolution = 256
 data_size_max = 10485760  # 10 MiB
@@ -110,8 +110,8 @@ def _decrypt_data_return_raw_wo_headers(data_to_dec, encryption_key):
     try:
         decrypted_data = _decrypt_data_return_raw(data_to_dec, encryption_key)
         # Stripping parts of decrypted chunk, finding encrypted data
-        data_hash = _depad_data(decrypted_data[:data_type_header_length])
-        data_length = int(_depad_data(decrypted_data[data_type_header_length:encrypted_headers_length]))
+        data_hash = decrypted_data[:data_hash_header_length]
+        data_length = int(_depad_data(decrypted_data[data_hash_header_length:encrypted_headers_length]))
         decrypted_data_raw = decrypted_data[encrypted_headers_length:encrypted_headers_length + data_length]
         return data_hash, decrypted_data_raw
     except Exception:
@@ -166,7 +166,8 @@ def decrypt_data(data_to_dec, encryption_key, return_raw=False):
         data_hash, decrypted_data_raw = _decrypt_data_return_raw_wo_headers(data_to_dec, encryption_key)
         decrypted_data_hash = _sha(decrypted_data_raw)
         if not decrypted_data_hash == data_hash:
-            raise EncryptionException("Data hash mismatch:\nExpected: {}\nActual:   {}".format(data_hash.hex(), decrypted_data_hash.hex()))
+            raise EncryptionException("Data hash mismatch:\nExpected: {}\nActual:   {}"
+                                      .format(data_hash.hex(), decrypted_data_hash.hex()))
         if return_raw:
             return decrypted_data_raw
         else:
